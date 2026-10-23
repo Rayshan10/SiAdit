@@ -73,4 +73,23 @@ class MatchingServiceTest extends TestCase
         $this->assertNull(MatchingService::parseDate(''));
         $this->assertNull(MatchingService::parseDate('tidak ada tanggal di sini'));
     }
+
+    /**
+     * Regresi: satu baris file pusat berisi '0000-00-00' yang diubah PHP
+     * menjadi tanggal tahun -0001 (1 SM) dan ditolak MySQL — harus
+     * diperlakukan sebagai "tanpa tanggal".
+     */
+    public function test_tanggal_nol_diperlakukan_sebagai_tanpa_tanggal(): void
+    {
+        $this->assertNull(MatchingService::parseDate('0000-00-00'));
+        $this->assertNull(MatchingService::parseDate('0000'));
+        $this->assertNull(MatchingService::parseDate(0));
+        $this->assertNull(MatchingService::parseDate(''));
+    }
+
+    public function test_tanggal_nol_memberi_tahun_unknown(): void
+    {
+        $this->assertSame('0000', MatchingService::extractYear('0000-00-00'));
+        $this->assertSame('0000', MatchingService::extractYear(0));
+    }
 }

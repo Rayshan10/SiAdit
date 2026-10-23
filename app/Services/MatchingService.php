@@ -38,15 +38,21 @@ class MatchingService
             return self::UNKNOWN_YEAR;
         }
 
-        // Serial number Excel
+        // Serial number Excel (0 tidak valid — berarti tanpa tanggal)
         if (is_numeric($tanggal)) {
+            if ((float) $tanggal <= 0) {
+                return self::UNKNOWN_YEAR;
+            }
+
             try {
-                return ExcelDate::excelToDateTimeObject(
+                $tahun = ExcelDate::excelToDateTimeObject(
                     (float) $tanggal
                 )->format('Y');
             } catch (\Throwable) {
                 return self::UNKNOWN_YEAR;
             }
+
+            return self::tahunMasukAkal($tahun) ? $tahun : self::UNKNOWN_YEAR;
         }
 
         // Format 19xx / 20xx di dalam string
@@ -75,11 +81,24 @@ class MatchingService
             return null;
         }
 
-        // Serial number Excel
+        // Tanggal-nol ('0000', '0000-00-00') berarti "tidak ada tanggal".
+        // Tanpa guard ini Carbon::parse menghasilkan tanggal tahun -1
+        // yang ditolak MySQL untuk kolom DATE.
+        if (preg_match('/^0{4}(?:[-\/.]0{1,2}){0,2}$/', $tanggal)) {
+            return null;
+        }
+
+        // Serial number Excel (0 tidak valid — berarti tanpa tanggal)
         if (is_numeric($tanggal)) {
+            if ((float) $tanggal <= 0) {
+                return null;
+            }
+
             try {
-                return Carbon::instance(
-                    ExcelDate::excelToDateTimeObject((float) $tanggal)
+                return self::tanggalSah(
+                    Carbon::instance(
+                        ExcelDate::excelToDateTimeObject((float) $tanggal)
+                    )
                 );
             } catch (\Throwable) {
                 return null;
@@ -105,14 +124,36 @@ class MatchingService
                 continue;
             }
 
-            return $carbon;
+            return self::tanggalSah($carbon);
         }
 
         // Format lain (ISO dsb.)
         try {
-            return Carbon::parse($tanggal);
+            return self::tanggalSah(Carbon::parse($tanggal));
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Tahun yang masuk akal untuk dataset TPU (1900-2100).
+     * Di luar rentang ini berarti data tanggal rusak.
+     */
+    private static function tahunMasukAkal(int|string $tahun): bool
+    {
+        return (int) $tahun >= 1900 && (int) $tahun <= 2100;
+    }
+
+    /**
+     * Buang hasil parsing dengan tahun tidak masuk akal, misalnya
+     * '0000-00-00' yang diubah PHP menjadi tahun -0001 (1 SM).
+     */
+    private static function tanggalSah(Carbon $carbon): ?Carbon
+    {
+        if (!self::tahunMasukAkal($carbon->year)) {
+            return null;
+        }
+
+        return $carbon;
     }
 }
