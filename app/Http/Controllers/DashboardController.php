@@ -57,7 +57,18 @@ class DashboardController extends Controller
         */
 
         if ($role == 'kepala_tpu') {
-            $tpuId = auth()->guard()->user()->tpu_id;
+
+            $user = auth()->guard()->user();
+
+            // Akun kepala TPU yang belum dihubungkan ke TPU oleh Admin
+            if (empty($user->tpu_id)) {
+                return view(
+                    'dashboard.kepala_tpu',
+                    ['totalMakam' => 0, 'belumTerhubung' => true]
+                );
+            }
+
+            $tpuId = $user->tpu_id;
 
             $totalMakam = DataMakam::where(
                 'tpu_id',
@@ -93,5 +104,13 @@ class DashboardController extends Controller
                 compact('tpus')
             );
         }
+
+        // Role tidak dikenali: arahkan ke profil dengan pesan agar tidak layar kosong
+        return redirect()
+            ->route('profile.edit')
+            ->with(
+                'error',
+                'Role akun Anda belum tersedia di sistem. Hubungi Admin untuk penyesuaian.'
+            );
     }
 }

@@ -36,13 +36,20 @@ class UserController extends Controller
     {
         $request->validate([
 
-            'name' => 'required',
+            'name' => ['required', 'string', 'max:255'],
 
-            'email' => 'required|email|unique:users',
+            'email' => ['required', 'email', 'max:255', 'unique:users'],
 
-            'password' => 'required|min:6',
+            'password' => ['required', 'min:6'],
 
-            'role' => 'required',
+            'role' => ['required', 'in:admin,kepala_tpu,kepala_uptd'],
+
+            'tpu_id' => ['required_if:role,kepala_tpu', 'nullable', 'exists:tpus,id'],
+
+        ], [
+            'role.in' => 'Role tidak valid.',
+            'tpu_id.required_if' => 'Kepala TPU wajib terhubung ke sebuah TPU.',
+            'tpu_id.exists' => 'TPU tidak ditemukan.',
         ]);
 
         User::create([
@@ -85,12 +92,18 @@ class UserController extends Controller
 
         $request->validate([
 
-            'name' => 'required',
+            'name' => ['required', 'string', 'max:255'],
 
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
 
-            'role' => 'required',
+            'role' => ['required', 'in:admin,kepala_tpu,kepala_uptd'],
 
+            'tpu_id' => ['required_if:role,kepala_tpu', 'nullable', 'exists:tpus,id'],
+
+        ], [
+            'role.in' => 'Role tidak valid.',
+            'tpu_id.required_if' => 'Kepala TPU wajib terhubung ke sebuah TPU.',
+            'tpu_id.exists' => 'TPU tidak ditemukan.',
         ]);
 
         $user->update([

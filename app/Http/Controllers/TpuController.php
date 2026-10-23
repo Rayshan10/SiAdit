@@ -30,19 +30,13 @@ class TpuController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-
-            'nama' => 'required',
-
-            'kode' => 'required|unique:tpus'
-
+            'nama' => ['required', 'string', 'max:255'],
+            'kode' => ['required', 'string', 'max:255', 'unique:tpus'],
         ]);
 
         Tpu::create([
-
             'nama' => $request->nama,
-
             'kode' => $request->kode,
-
         ]);
 
         return redirect()
@@ -67,14 +61,11 @@ class TpuController extends Controller
     ) {
 
         $request->validate([
-
-            'nama' => 'required',
-
-            'kode' => 'required|unique:tpus,kode,' . $tpu->id
-
+            'nama' => ['required', 'string', 'max:255'],
+            'kode' => ['required', 'string', 'max:255', 'unique:tpus,kode,' . $tpu->id],
         ]);
 
-        $tpu->update($request->all());
+        $tpu->update($request->only(['nama', 'kode']));
 
         return redirect()
             ->route('tpus.index')
@@ -93,7 +84,17 @@ class TpuController extends Controller
                 'TPU masih digunakan oleh user.'
             );
         }
-    
+
+        // Data makam & audit terkait ikut hilang jika TPU dihapus —
+        // hentikan agar data historis tidak terhapus tidak sengaja.
+        if($tpu->dataMakam()->count() > 0)
+        {
+            return back()->with(
+                'error',
+                'TPU masih memiliki data makam. Hapus data makam terlebih dahulu.'
+            );
+        }
+
         $tpu->delete();
 
         return redirect()
