@@ -7,6 +7,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // MySQL-specific: lewati saat driver lain (mis. sqlite pada saat test)
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE users
             MODIFY role ENUM(
@@ -19,6 +24,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE users
             MODIFY role ENUM(
