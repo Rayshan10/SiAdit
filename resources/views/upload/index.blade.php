@@ -35,7 +35,19 @@
                 </p>
             </div>
 
-            {{-- ALERT ERROR (Ditambahkan di sini) --}}
+            {{-- ALERT ERROR VALIDASI --}}
+            @if ($errors->any())
+                <div class="mx-8 mt-6 mb-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                    <div class="text-sm font-semibold mb-1">Periksa kembali formulir:</div>
+                    <ul class="list-disc list-inside text-sm space-y-0.5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            {{-- ALERT ERROR PROSES --}}
             @if (session('error'))
                 <div
                     class="mx-8 mt-6 mb-2 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
@@ -77,16 +89,28 @@
                     <label class="text-sm font-medium text-slate-700">
                         TPU <span class="text-red-500">*</span>
                     </label>
-                    <select name="tpu_id"
-                        class="custom-select w-full h-10 border border-slate-200 rounded-lg px-3 text-sm text-slate-800 bg-slate-50 focus:outline-none focus:border-[#1A3A5C] focus:ring-1 focus:ring-[#1A3A5C] transition">
+                    @if ($tpus->count() === 1 && auth()->user()->role !== 'admin')
+                        {{-- Kepala TPU dengan satu TPU: tampilan info, bukan dropdown --}}
+                        <input type="hidden" name="tpu_id" value="{{ $tpus->first()->id }}">
+                        <div class="w-full h-10 border border-slate-200 rounded-lg px-3 text-sm bg-slate-100 flex items-center text-slate-700 font-medium">
+                            {{ $tpus->first()->nama }}
+                            <span class="ml-auto text-[10px] uppercase tracking-wide text-slate-400 border border-slate-200 rounded px-1.5 py-0.5">Tetap</span>
+                        </div>
+                    @else
+                        <select name="tpu_id"
+                            class="custom-select w-full h-10 border border-slate-200 rounded-lg px-3 text-sm text-slate-800 bg-slate-50 focus:outline-none focus:border-[#1A3A5C] focus:ring-1 focus:ring-[#1A3A5C] transition">
 
-                        <option value="">— Pilih TPU —</option>
+                            <option value="">— Pilih TPU —</option>
 
-                        @foreach ($tpus as $tpu)
-                            <option value="{{ $tpu->id }}">{{ $tpu->nama }}</option>
-                        @endforeach
+                            @foreach ($tpus as $tpu)
+                                <option value="{{ $tpu->id }}" @selected(old('tpu_id') == $tpu->id)>{{ $tpu->nama }}</option>
+                            @endforeach
 
-                    </select>
+                        </select>
+                    @endif
+                    @error('tpu_id')
+                        <span class="text-xs text-red-600">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="border-t border-slate-100"></div>
@@ -112,6 +136,9 @@
                         <span id="name-pusat" class="text-xs text-green-600 font-medium hidden"></span>
                         <input type="file" name="file_pusat" accept=".xls,.xlsx,.csv" id="input-pusat" required>
                     </div>
+                    @error('file_pusat')
+                        <span class="text-xs text-red-600">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 {{-- File Cabang --}}
@@ -135,6 +162,9 @@
                         <span id="name-cabang" class="text-xs text-green-600 font-medium hidden"></span>
                         <input type="file" name="file_cabang" accept=".xls,.xlsx,.csv" id="input-cabang" required>
                     </div>
+                    @error('file_cabang')
+                        <span class="text-xs text-red-600">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 {{-- Submit Button --}}

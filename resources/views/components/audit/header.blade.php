@@ -4,10 +4,16 @@
         <p class="text-sm text-slate-500 mt-1">Hasil perbandingan data makam Pusat dan Cabang.</p>
     </div>
 
-    <form action="{{ url('/audit/generate') }}" method="POST">
+    <form action="{{ url('/audit/generate') }}" method="POST" onsubmit="return bolehJalankanAudit(event)">
         @csrf
+        @php
+            $bisaJalankan = !empty($latestResult?->tpu_id);
+        @endphp
         <input type="hidden" name="tpu_id" value="{{ $latestResult?->tpu_id }}">
-        <button id="audit-btn" type="submit" class="h-10 px-4 bg-[#1A3A5C] hover:bg-[#162F4A] text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition shadow-sm">
+        <button id="audit-btn" type="submit"
+            @unless ($bisaJalankan) disabled @endunless
+            @unless ($bisaJalankan) title="Belum ada audit tersimpan — jalankan audit pertama melalui menu Upload File" @endunless
+            class="h-10 px-4 bg-[#1A3A5C] hover:bg-[#162F4A] text-white text-sm font-semibold rounded-lg flex items-center gap-2 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#1A3A5C]">
             {{-- ICON NORMAL --}}
             <svg id="audit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="23 4 23 10 17 10" />
@@ -21,4 +27,18 @@
             <span id="audit-text">Jalankan Audit Ulang</span>
         </button>
     </form>
+</div>
+
+<script>
+    const auditBisaJalankan = @js($bisaJalankan);
+
+    function bolehJalankanAudit(event) {
+        if (!auditBisaJalankan) {
+            alert('Belum ada audit tersimpan. Jalankan audit pertama melalui menu Upload File.');
+            event.preventDefault();
+            return false;
+        }
+        return true;
+    }
+</script>
 </div>

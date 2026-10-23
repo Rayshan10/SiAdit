@@ -4,16 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Dashboard') - AuditSys</title>
+    <title>@yield('title', 'Dashboard') - SiAdit</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- CSS hasil kompilasi Vite (ganti Tailwind CDN agar siap produksi) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     <style>
         body {
-            font-family: 'Plus+Jakarta+Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Scrollbar tipis untuk daftar pada tampilan rincian audit */
+        .custom-scrollbar {
+            scrollbar-width: thin;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(100, 116, 139, .35);
+            border-radius: 9999px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
     </style>
 
@@ -22,10 +42,18 @@
 
 <body class="bg-slate-50 text-slate-800 flex flex-col h-screen overflow-hidden">
 
-    <div class="flex flex-1 h-full overflow-hidden">
+    <div class="flex flex-1 h-full overflow-hidden relative">
+
+        {{-- Backdrop halaman mobile saat sidebar terbuka --}}
+        <div id="sidebar-backdrop"
+            class="hidden fixed inset-0 bg-slate-900/50 z-20 lg:hidden"
+            onclick="toggleSidebar()"></div>
 
         <aside id="sidebar"
-            class="w-[220px] bg-[#1A3A5C] flex flex-col shrink-0 transition-[width] duration-300 overflow-hidden">
+            class="w-[220px] bg-[#1A3A5C] flex flex-col shrink-0 transition-[width] duration-300 overflow-hidden z-30">
+            @php
+                $namaLengkap = auth()->user()->name ?? '';
+            @endphp
 
             <div class="flex items-center gap-2.5 px-4 pt-5 pb-4 border-b border-white/10">
                 <div class="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center shrink-0">
@@ -34,10 +62,13 @@
                         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                     </svg>
                 </div>
-                <span class="text-white font-semibold text-[15px] whitespace-nowrap">AuditSys</span>
+                <div class="whitespace-nowrap">
+                    <span class="text-white font-semibold text-[15px]">SiAdit</span>
+                    <span class="block text-white/50 text-[10px] leading-tight">Sistem Informasi Audit Data</span>
+                </div>
             </div>
 
-            <nav class="flex-1 px-2 pt-4 flex flex-col gap-1 overflow-y-auto">
+            <nav class="flex-1 px-2 pt-4 flex flex-col gap-1 overflow-y-auto custom-scrollbar">
 
     <div
         class="text-[10px] font-semibold text-white/40 tracking-widest uppercase px-2.5 pb-1 mt-1">
@@ -137,93 +168,28 @@
     @endif
 
     {{-- SEMUA ROLE --}}
-    @if(in_array(auth()->user()->role, ['admin','kepala_tpu','kepala_uptd']))
+    <a href="{{ url('/audit') }}"
+        class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] whitespace-nowrap transition-colors {{ request()->is('audit*') ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/10 hover:text-white' }}">
 
-        <a href="{{ url('/audit') }}"
-            class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] whitespace-nowrap transition-colors {{ request()->is('audit*') ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/10 hover:text-white' }}">
+        <svg width="16" height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round">
 
-            <svg width="16" height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
 
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
+        </svg>
 
-            </svg>
+        Hasil Audit
 
-            Hasil Audit
-
-        </a>
-
-    @endif
-
-    {{-- KHUSUS ADMIN --}}
-    @if(auth()->user()->role == 'admin')
-
-        <div
-            class="text-[10px] font-semibold text-white/40 tracking-widest uppercase px-2.5 pb-1 mt-4">
-
-            Laporan
-
-        </div>
-
-        <a href="{{ url('/notifications') }}"
-            class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] whitespace-nowrap transition-colors {{ request()->is('notifications') ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/10 hover:text-white' }}">
-
-            <svg width="16" height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-
-            </svg>
-
-            Notifikasi
-
-            <span
-                class="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full leading-none">
-
-                3
-
-            </span>
-
-        </a>
-
-        <a href="{{ url('/settings') }}"
-            class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] whitespace-nowrap transition-colors {{ request()->is('settings') ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/10 hover:text-white' }}">
-
-            <svg width="16" height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-
-                <circle cx="12" cy="12" r="3" />
-
-                <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-
-            </svg>
-
-            Pengaturan
-
-        </a>
-
-    @endif
+    </a>
 
     {{-- LOGOUT --}}
     <form method="POST" action="{{ route('logout') }}">
@@ -256,10 +222,10 @@
 
             @if(auth()->check())
                 <div class="px-4 py-3 border-b border-white/10 text-white">
-                    <div class="text-sm font-semibold">
-                        {{ auth()->user()->name }}
+                    <div class="text-sm font-semibold truncate" title="{{ $namaLengkap }}">
+                        {{ $namaLengkap }}
                     </div>
-                    <div class="text-xs text-slate-300">
+                    <div class="text-xs text-slate-300 truncate" title="{{ auth()->user()->email }}">
                         {{ auth()->user()->email }}
                     </div>
                 </div>
@@ -271,7 +237,7 @@
             <header
                 class="h-[52px] bg-white border-b border-slate-200 flex items-center justify-between px-5 shrink-0">
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleSidebar()"
+                    <button onclick="toggleSidebar()" aria-label="Buka/tutup menu"
                         class="p-1.5 rounded-md hover:bg-slate-100 transition-colors focus:outline-none text-slate-600">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -284,19 +250,15 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <a href="{{ url('/notifications') }}"
-                        class="relative p-1.5 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors block">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                        </svg>
-                        <span
-                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                    </a>
                     <div
-                        class="w-8 h-8 rounded-full bg-[#1A3A5C] text-white flex items-center justify-center text-xs font-semibold cursor-pointer shadow-sm">
-                        AS</div>
+                        class="w-8 h-8 rounded-full bg-[#1A3A5C] text-white flex items-center justify-center text-xs font-semibold cursor-default shadow-sm select-none">
+                        {{-- Inisial pengguna aktif, bukan hardcode --}}
+                        {{ collect(explode(' ', trim($namaLengkap)))
+                            ->filter()
+                            ->map(fn ($kata) => mb_substr(mb_strtoupper($kata), 0, 1))
+                            ->take(2)
+                            ->implode('') ?: 'SD' }}
+                    </div>
                 </div>
             </header>
 
@@ -309,17 +271,45 @@
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            // Toggle class width Tailwind
-            sidebar.classList.toggle('w-[220px]');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const isMobile = window.innerWidth < 1024;
+            const stateStore = isMobile ? 'siadit-sidebar-mobile' : 'siadit-sidebar-desktop';
+
             sidebar.classList.toggle('w-0');
+            sidebar.classList.toggle('w-[220px]');
+
+            const tertutup = sidebar.classList.contains('w-0');
+
+            if (backdrop) {
+                backdrop.classList.toggle('hidden', tertutup);
+            }
+
+            try {
+                sessionStorage.setItem(stateStore, tertutup ? 'tutup' : 'buka');
+            } catch (e) { /* abaikan bila penyimpanan diblok */ }
         }
+
+        // Pulihkan keadaan sidebar saat halaman dimuat (per ukuran layar)
+        (function () {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            let keadaan = null;
+
+            try {
+                keadaan = sessionStorage.getItem(window.innerWidth < 1024 ? 'siadit-sidebar-mobile' : 'siadit-sidebar-desktop');
+            } catch (e) { /* abaikan */ }
+
+            if (keadaan === 'tutup') {
+                sidebar.classList.add('w-0');
+                sidebar.classList.remove('w-[220px]');
+            } else if (keadaan === 'buka' && window.innerWidth < 1024) {
+                // Di layar kecil, sidebar terbuka menampilkan backdrop
+                backdrop.classList.remove('hidden');
+            }
+        })();
     </script>
 
     @stack('scripts')
 </body>
 
-</html>
-
-
-</body>
 </html>

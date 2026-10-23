@@ -13,7 +13,7 @@
         </h1>
 
         <p class="text-slate-500 text-sm">
-            Tambahkan pengguna baru ke sistem AuditSys
+            Tambahkan pengguna baru ke sistem SiAdit
         </p>
 
     </div>

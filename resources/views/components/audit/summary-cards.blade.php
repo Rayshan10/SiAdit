@@ -49,9 +49,9 @@
             <span class="text-xs font-bold uppercase tracking-wider">Fuzzy Match</span>
         </div>
         <div class="text-3xl font-extrabold text-slate-800">{{ number_format($displayData->total_fuzzy_match ?? 0, 0, ',', '.') }}</div>
-        <div class="text-[11px] text-slate-500 font-medium">Nama mirip berdasarkan similarity</div>
+        <div class="text-[11px] text-slate-500 font-medium">Nama mirip berdasarkan kemiripan</div>
     </div>
-    {{-- Card Pusat Tidak Ada di Pandu --}}
+    {{-- Card Pusat Tidak Ada --}}
     <div class="flex flex-col gap-2 p-4 rounded-xl border border-orange-100 bg-orange-50/50">
         <div class="flex items-center gap-2 text-orange-700">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -64,7 +64,7 @@
         <div class="text-3xl font-extrabold text-slate-800">{{ number_format($displayData->total_pusat_tidak_ada ?? 0, 0, ',', '.') }}</div>
         <div class="text-[11px] text-slate-500 font-medium">Data pusat tidak di cabang</div>
     </div>
-    {{-- Card Pandu Tidak Ada di Pusat --}}
+    {{-- Card Cabang Tidak Ada --}}
     <div class="flex flex-col gap-2 p-4 rounded-xl border border-red-100 bg-red-50/50">
         <div class="flex items-center gap-2 text-red-700">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -77,28 +77,16 @@
         <div class="text-3xl font-extrabold text-slate-800">{{ number_format($displayData->total_cabang_tidak_ada ?? 0, 0, ',', '.') }}</div>
         <div class="text-[11px] text-slate-500 font-medium">Data cabang tidak di pusat</div>
     </div>
-    {{-- Card Duplikat Pusat --}}
-    <div class="flex flex-col gap-2 p-4 rounded-xl border border-blue-100 bg-blue-50/50">
-        <div class="flex items-center gap-2 text-blue-700">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            <span class="text-xs font-bold uppercase tracking-wider">Duplikat Pusat</span>
-        </div>
-        <div class="text-3xl font-extrabold text-slate-800">{{ number_format($displayData->total_duplikat_pusat ?? 0, 0, ',', '.') }}</div>
-        <div class="text-[11px] text-slate-500 font-medium">Data ganda di pusat</div>
-    </div>
-    {{-- Card Duplikat Pandu --}}
+    {{-- Card Duplikat --}}
     <div class="flex flex-col gap-2 p-4 rounded-xl border border-cyan-100 bg-cyan-50/50">
         <div class="flex items-center gap-2 text-cyan-700">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            <span class="text-xs font-bold uppercase tracking-wider">Duplikat Cabang</span>
+            <span class="text-xs font-bold uppercase tracking-wider">Duplikat</span>
         </div>
-        <div class="text-3xl font-extrabold text-slate-800">{{ number_format($displayData->total_duplikat_cabang ?? 0, 0, ',', '.') }}</div>
-        <div class="text-[11px] text-slate-500 font-medium">Data ganda di cabang</div>
+        <div class="text-3xl font-extrabold text-slate-800">{{ number_format($displayData->total_duplikat_pusat + $displayData->total_duplikat_cabang, 0, ',', '.') }}</div>
+        <div class="text-[11px] text-slate-500 font-medium">Pusat: {{ $displayData->total_duplikat_pusat }} • Cabang: {{ $displayData->total_duplikat_cabang }}</div>
     </div>
 </div>

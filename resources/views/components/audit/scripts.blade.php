@@ -9,7 +9,7 @@
         const auditIcon = document.getElementById('audit-icon');
         const loadingIcon = document.getElementById('loading-icon');
 
-        if (form) {
+        if (form && auditBtn) {
             form.addEventListener('submit', () => {
                 auditBtn.disabled = true;
                 auditBtn.classList.add('opacity-80', 'cursor-not-allowed');
@@ -18,6 +18,22 @@
                 loadingIcon.classList.remove('hidden');
             });
         }
+
+        // Pencarian sederhana per kolom di tampilan rincian audit
+        document.querySelectorAll('.cari-daftar').forEach((input) => {
+            const panel = input.closest('.daftar-audit');
+
+            if (!panel) return;
+
+            input.addEventListener('input', () => {
+                const kata = input.value.trim().toUpperCase();
+
+                panel.querySelectorAll('[data-nama]').forEach((el) => {
+                    const nama = (el.dataset.nama || '').toUpperCase();
+                    el.style.display = (!kata || nama.includes(kata)) ? '' : 'none';
+                });
+            });
+        });
 
         // Logika Chart.js
         @if (isset($displayData))
@@ -35,7 +51,7 @@
 
             const totalNilai = chartValues.reduce((a, b) => a + b, 0);
 
-            if (ctx && totalNilai > 0) {
+            if (ctx && totalNilai > 0 && typeof Chart !== 'undefined') {
                 new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -64,7 +80,7 @@
                                     usePointStyle: true,
                                     boxWidth: 8,
                                     font: {
-                                        family: "'Inter', sans-serif",
+                                        family: "'Plus Jakarta Sans', sans-serif",
                                         size: 12
                                     }
                                 }

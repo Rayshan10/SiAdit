@@ -20,7 +20,7 @@
             </h1>
 
             <p class="text-slate-500 text-sm">
-                Manajemen pengguna sistem AuditSys
+                Manajemen pengguna sistem SiAdit
             </p>
         </div>
 
