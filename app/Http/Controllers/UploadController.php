@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Imports\DataMakamImport;
-use App\Models\DataMakam;
-use App\Models\Import;
 use App\Models\Tpu;
+use App\Services\ImportMakamService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
 
 class UploadController extends Controller
 {
+    public function __construct(
+        private ImportMakamService $importMakam
+    ) {
+    }
+
     public function index()
     {
         if (Auth::user()->role === 'admin') {
@@ -77,44 +79,31 @@ class UploadController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | TRANSAKSI: SEMUA ATAU TIDAK SAMA-SEKALI
+        | TRANSAKSI: GANTI DATA (Bukan menambah baris berulang!)
         |--------------------------------------------------------------------------
-        | Import pusat + cabang dibungkus satu transaksi; jika salah satu
-        | gagal, seluruh data import dibatalkan sehingga tidak ada data yatim.
+        | Mengunggah file baru menggantikan data lama untuk sumber yang sama
+        | di TPU tersebut. Kedua file diproses dalam satu transaksi sehingga
+        | tidak ada keadaan campuran (pusat baru + cabang tua).
         */
+        $jumlahPusat = 0;
+        $jumlahCabang = 0;
+
         try {
-            $jumlahBaris = DB::transaction(
-                function () use ($tpuId, $request) {
-                    $importPusat = Import::create([
-                        'tpu_id'   => $tpuId,
-                        'sumber'   => 'pusat',
-                        'filename' => $request->file('file_pusat')->getClientOriginalName(),
-                    ]);
-
-                    Excel::import(
-                        new DataMakamImport($tpuId, $importPusat->id, 'pusat'),
-                        $request->file('file_pusat')
+            DB::transaction(
+                function () use ($tpuId, $request, &$jumlahPusat, &$jumlahCabang) {
+                    $jumlahPusat = $this->importMakam->gantiDataDanImport(
+                        (int) $tpuId,
+                        'pusat',
+                        $request->file('file_pusat'),
+                        useTransaction: false
                     );
 
-                    $importCabang = Import::create([
-                        'tpu_id'   => $tpuId,
-                        'sumber'   => 'cabang',
-                        'filename' => $request->file('file_cabang')->getClientOriginalName(),
-                    ]);
-
-                    Excel::import(
-                        new DataMakamImport($tpuId, $importCabang->id, 'cabang'),
-                        $request->file('file_cabang')
+                    $jumlahCabang = $this->importMakam->gantiDataDanImport(
+                        (int) $tpuId,
+                        'cabang',
+                        $request->file('file_cabang'),
+                        useTransaction: false
                     );
-
-                    // Catat jumlah baris yang berhasil diimport
-                    $totalPusat  = DataMakam::where('import_id', $importPusat->id)->count();
-                    $totalCabang = DataMakam::where('import_id', $importCabang->id)->count();
-
-                    $importPusat->update(['total_data' => $totalPusat]);
-                    $importCabang->update(['total_data' => $totalCabang]);
-
-                    return $totalPusat + $totalCabang;
                 }
             );
         } catch (\Throwable $e) {
@@ -128,8 +117,10 @@ class UploadController extends Controller
 
         return redirect('/upload')->with(
             'success',
-            "File berhasil diupload — {$jumlahBaris} baris data makam terbaca. " .
-            'Silakan buka menu Hasil Audit untuk menjalankan sinkronisasi.'
+            "Import berhasil — File Pusat: " . number_format($jumlahPusat) . ' baris, '
+            . "File Cabang: " . number_format($jumlahCabang) . ' baris. '
+            . 'Data lama per sumber telah diganti dan hasil audit direset. '
+            . 'Silakan buka menu Hasil Audit untuk menjalankan sinkronisasi.'
         );
     }
 }

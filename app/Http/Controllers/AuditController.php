@@ -124,6 +124,18 @@ class AuditController extends Controller
             );
         }
 
+        // Dataset besar: jalankan lewat CLI agar tidak kena timeout browser.
+        $jumlahData = DataMakam::where('tpu_id', $tpuId)->count();
+
+        if ($jumlahData > 50_000) {
+            return back()->with(
+                'error',
+                "Data di TPU ini besar (" . number_format($jumlahData) . ' baris). '
+                . "Jalankan audit lewat terminal agar aman dari timeout: "
+                . "php artisan siadit:generate-audit {$tpuId}"
+            );
+        }
+
         $result = $auditService->generate($tpuId);
 
         return redirect('/audit')->with(

@@ -53,6 +53,26 @@ class DataMakamImport implements
 
         /*
         |--------------------------------------------------------------------------
+        | FALLBACK: TANGGAL MENINGGAL / WAFAT
+        |--------------------------------------------------------------------------
+        | Beberapa file pusat tidak memiliki tanggal pemakaman (kolom kosong),
+        | tetapi memiliki tanggal meninggal. Tanpa fallback ini seluruh baris
+        | akan bernilai id_match NAMA-0000 dan salah terhitung duplikat.
+        */
+        if (
+            $tanggal === null
+            || trim((string) $tanggal) === ''
+        ) {
+            $tanggal =
+                $row['meninggal_tanggal']
+                ?? $row['tanggal_kematian']
+                ?? $row['tgl_meninggal']
+                ?? $row['tgl_wafat']
+                ?? null;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | SKIP BARIS KOSONG
         |--------------------------------------------------------------------------
         */
