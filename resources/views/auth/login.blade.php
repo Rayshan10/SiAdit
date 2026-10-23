@@ -5,9 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Login - AuditSys</title>
+    <title>Login - SiAdit</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- CSS hasil kompilasi Vite (konsisten dengan layout aplikasi) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
         rel="stylesheet">
@@ -40,7 +41,7 @@
             </div>
 
             <h1 class="text-3xl font-bold text-[#1A3A5C]">
-                AuditSys
+                SiAdit
             </h1>
 
             <p class="text-slate-500 mt-2">
@@ -84,16 +85,10 @@
 
                 </button>
 
-                <div class="text-center mt-5 text-sm">
+                <div class="text-center mt-5 text-xs text-slate-400">
 
-                    Belum punya akun?
-
-                    <a href="{{ route('register') }}"
-                        class="text-blue-600 font-semibold">
-
-                        Register
-
-                    </a>
+                    Butuh akun? Hubungi Admin untuk pembuatan akun
+                    melalui menu <span class="font-semibold text-slate-600">Kelola User</span>.
 
                 </div>
 

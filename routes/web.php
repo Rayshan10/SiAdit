@@ -53,11 +53,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Admin + Kepala TPU
+| Admin + Kepala TPU (Upload File)
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'kepala_tpu'])->group(function () {
 
     Route::controller(UploadController::class)->group(function () {
         Route::get('/upload', 'index');
