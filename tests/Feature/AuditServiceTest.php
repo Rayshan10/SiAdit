@@ -149,4 +149,67 @@ class AuditServiceTest extends TestCase
         $this->assertDatabaseCount('audit_results', 1);
         $this->assertDatabaseCount('audits', 9);
     }
+
+    /**
+     * Regresi: satu baris cabang tidak boleh dipakai dua kali.
+     *
+     * Dulu baris cabang yang sudah diklaim lewat tahun_beda masih tertinggal
+     * di kamus id/nama sehingga bisa diklaim ulang baris pusat lain lewat
+     * jalur match_full (57 baris terdampak pada data nyata TPU Pandu).
+     */
+    public function test_satu_baris_cabang_tidak_dipakai_dua_kali(): void
+    {
+        $tpu = Tpu::create([
+            'nama' => 'TPU Uji Booking Ganda',
+            'kode' => 'TPU-BOOKING-GANDA',
+        ]);
+
+        /*
+         | pusat P1 BUDI S-2020 -> tahun_beda   (klaim C "BUDI S-2021")
+         | pusat P2 BUDI S-2021 -> pusat_tidak_ada (C sudah terpakai)
+         */
+        foreach ([
+            ['BUDI S', '2020-05-01', 'BUDI S-2020'],
+            ['BUDI S', '2021-05-01', 'BUDI S-2021'],
+        ] as [$nama, $tanggal, $idMatch]) {
+            DataMakam::create([
+                'tpu_id' => $tpu->id,
+                'import_id' => 1,
+                'sumber' => 'pusat',
+                'nama' => $nama,
+                'tanggal_raw' => $tanggal,
+                'nama_clean' => $nama,
+                'tanggal_clean' => $tanggal,
+                'id_match' => $idMatch,
+            ]);
+        }
+
+        DataMakam::create([
+            'tpu_id' => $tpu->id,
+            'import_id' => 2,
+            'sumber' => 'cabang',
+            'nama' => 'BUDI S',
+            'tanggal_raw' => '2021-05-01',
+            'nama_clean' => 'BUDI S',
+            'tanggal_clean' => '2021-05-01',
+            'id_match' => 'BUDI S-2021',
+        ]);
+
+        $hasilAudit = app(AuditService::class)->generate($tpu->id);
+
+        $this->assertSame(0, $hasilAudit->total_match);
+        $this->assertSame(1, $hasilAudit->total_tahun_beda);
+        $this->assertSame(1, $hasilAudit->total_pusat_tidak_ada);
+        $this->assertSame(0, $hasilAudit->total_cabang_tidak_ada);
+
+        $query = Audit::where('audit_result_id', $hasilAudit->id)
+            ->whereIn('status', ['match_full', 'tahun_beda', 'fuzzy_match']);
+
+        // Tiap baris cabang hanya pernah jadi pasangan satu kali
+        $this->assertSame(
+            (clone $query)->count(),
+            (clone $query)->distinct()->count('matched_with'),
+            'Ada baris cabang yang dipakai lebih dari satu kali.'
+        );
+    }
 }

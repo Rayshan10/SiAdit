@@ -34,8 +34,12 @@ class AuditService
 
                 $this->resetHasilLama($tpuId);
 
-                $pusat = DataMakam::where('tpu_id', $tpuId)->where('sumber', 'pusat')->get();
-                $cabang = DataMakam::where('tpu_id', $tpuId)->where('sumber', 'cabang')->get();
+                // Penting: hanya ambil kolom yang dipakai service agar memori
+                // tetap aman pada dataset besar (TPU Pandu ~23 ribu baris/TPU)
+                $pusat = DataMakam::where('tpu_id', $tpuId)->where('sumber', 'pusat')
+                    ->get(['id', 'nama_clean', 'id_match']);
+                $cabang = DataMakam::where('tpu_id', $tpuId)->where('sumber', 'cabang')
+                    ->get(['id', 'nama_clean', 'id_match']);
 
                 $auditRows = [];
                 $now = now();
@@ -111,52 +115,48 @@ class AuditService
                     $idM = CleaningService::softNormalize($p->id_match);
                     $nama = CleaningService::softNormalize($p->nama_clean);
 
+                    /*
+                     | Pencarian pasangan dilakukan berurutan dari kandidat yang
+                     | paling spesifik: id_match persis -> nama_clean persis ->
+                     | nama mirip (fuzzy). Semua jalur hanya boleh mengklaim
+                     | kandidat yang belum mendapat pasangan agar satu baris
+                     | cabang tidak pernah dipakai dua kali.
+                     */
+                    $pasangan = null;
+                    $statusKlaim = null;
+
                     // Cek 1: MATCH FULL (id_match sama persis)
                     if (!empty($cabangDictById[$idM])) {
-                        $cMatch = array_shift($cabangDictById[$idM]);
-
-                        $auditRows[] = $this->barisAudit(
-                            $p->id,
-                            $cMatch->id,
-                            100,
-                            0,
-                            'match_full',
-                            'ID Match sama',
-                            $now
+                        $kandidat = $this->ambilKandidatBelumDipakai(
+                            $cabangDictById[$idM],
+                            $cabangUsedIds
                         );
 
-                        $totalMatch++;
-                        $cabangUsedIds[$cMatch->id] = true;
-
-                        // Hapus dari kamus nama agar tidak diklaim lagi oleh Tahun Beda
-                        if (isset($cabangDictByNama[$nama])) {
-                            foreach ($cabangDictByNama[$nama] as $idx => $cItem) {
-                                if ($cItem->id === $cMatch->id) {
-                                    unset($cabangDictByNama[$nama][$idx]);
-                                    break;
-                                }
-                            }
+                        if ($kandidat !== null) {
+                            $pasangan = $kandidat;
+                            $statusKlaim = 'match_full';
                         }
                     }
-                    // Cek 2: TAHUN BEDA (id_match beda, tapi nama_clean persis sama)
-                    elseif (!empty($cabangDictByNama[$nama])) {
-                        $cMatch = array_shift($cabangDictByNama[$nama]);
 
-                        $auditRows[] = $this->barisAudit(
-                            $p->id,
-                            $cMatch->id,
-                            100,
-                            0,
-                            'tahun_beda',
-                            'Nama sama, tahun berbeda',
-                            $now
+                    // Cek 2: TAHUN BEDA (id_match beda, tapi nama_clean persis sama)
+                    if ($pasangan === null && !empty($cabangDictByNama[$nama])) {
+                        $kandidat = $this->ambilKandidatBelumDipakai(
+                            $cabangDictByNama[$nama],
+                            $cabangUsedIds
                         );
 
-                        $totalTahunBeda++;
-                        $cabangUsedIds[$cMatch->id] = true;
+                        if ($kandidat !== null) {
+                            $pasangan = $kandidat;
+                            $statusKlaim = 'tahun_beda';
+                        }
                     }
+
                     // Cek 3: CARI KANDIDAT TERMIRIP (FUZZY MATCH)
-                    else {
+                    $bestMatch = null;
+                    $bestSimilarity = 0;
+                    $bestDistance = 0;
+
+                    if ($pasangan === null) {
                         [$bestMatch, $bestSimilarity, $bestDistance] = $this->cariKandidatTermirip(
                             $nama,
                             $cabangDictByPanjang,
@@ -168,22 +168,14 @@ class AuditService
                             && $bestSimilarity >= self::FUZZY_MIN_SIMILARITY
                             && $bestDistance <= self::FUZZY_MAX_DISTANCE
                         ) {
-                            $auditRows[] = $this->barisAudit(
-                                $p->id,
-                                $bestMatch->id,
-                                $bestSimilarity,
-                                $bestDistance,
-                                'fuzzy_match',
-                                "Kemiripan {$bestSimilarity}% (jarak {$bestDistance})",
-                                $now
-                            );
-
-                            $totalFuzzyMatch++;
-                            $cabangUsedIds[$bestMatch->id] = true;
-
-                            continue;
+                            $pasangan = $bestMatch;
+                            $statusKlaim = 'fuzzy_match';
+                        } else {
+                            $bestMatch = null;
                         }
+                    }
 
+                    if ($pasangan === null) {
                         // Tidak ditemukan: data pusat tidak ada di cabang
                         $auditRows[] = $this->barisAudit(
                             $p->id,
@@ -196,6 +188,58 @@ class AuditService
                         );
 
                         $totalPusatTidakAda++;
+
+                        continue;
+                    }
+
+                    $cabangUsedIds[$pasangan->id] = true;
+
+                    if ($statusKlaim === 'match_full') {
+                        $auditRows[] = $this->barisAudit(
+                            $p->id,
+                            $pasangan->id,
+                            100,
+                            0,
+                            'match_full',
+                            'ID Match sama',
+                            $now
+                        );
+
+                        $totalMatch++;
+
+                        // Hapus dari kamus nama agar tidak diklaim lagi oleh Tahun Beda
+                        if (isset($cabangDictByNama[$nama])) {
+                            foreach ($cabangDictByNama[$nama] as $idx => $cItem) {
+                                if ($cItem->id === $pasangan->id) {
+                                    unset($cabangDictByNama[$nama][$idx]);
+                                    break;
+                                }
+                            }
+                        }
+                    } elseif ($statusKlaim === 'tahun_beda') {
+                        $auditRows[] = $this->barisAudit(
+                            $p->id,
+                            $pasangan->id,
+                            100,
+                            0,
+                            'tahun_beda',
+                            'Nama sama, tahun berbeda',
+                            $now
+                        );
+
+                        $totalTahunBeda++;
+                    } else {
+                        $auditRows[] = $this->barisAudit(
+                            $p->id,
+                            $pasangan->id,
+                            $bestSimilarity,
+                            $bestDistance,
+                            'fuzzy_match',
+                            "Kemiripan {$bestSimilarity}% (jarak {$bestDistance})",
+                            $now
+                        );
+
+                        $totalFuzzyMatch++;
                     }
                 }
 
@@ -307,6 +351,25 @@ class AuditService
     }
 
     /**
+     * Ambil kandidat pertama yang BELUM mendapat pasangan dari suatu daftar
+     * kandidat (array_shift, seperti VLOOKUP yang lompat ke baris berikut).
+     * Baris yang sudah dipakai dilewati agar tidak ada baris cabang yang
+     * dipakai dua kali oleh baris pusat yang berbeda.
+     */
+    private function ambilKandidatBelumDipakai(array &$daftar, array $cabangUsedIds): ?DataMakam
+    {
+        while ($daftar) {
+            $kandidat = array_shift($daftar);
+
+            if (!isset($cabangUsedIds[$kandidat->id])) {
+                return $kandidat;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Cari kandidat cabang yang paling mirip dengan sebuah nama.
      *
      * Optimasi performa:
@@ -332,27 +395,27 @@ class AuditService
         ) {
             $kandidats = $cabangDictByPanjang[$panjang] ?? [];
 
-            foreach ($kandidats as $candidate) {
-                if (isset($cabangUsedIds[$candidate->id])) {
+            foreach ($kandidats as $n => $kandidat) {
+                if (isset($cabangUsedIds[$kandidat->id])) {
                     continue;
                 }
 
-                $candidateName = CleaningService::softNormalize($candidate->nama_clean);
+                $namaKandidat = CleaningService::softNormalize($kandidat->nama_clean);
 
                 // Urutan ukur: jarak lebih dulu (murah), kemiripan kemudian
-                $distance = levenshtein($nama, $candidateName);
+                $distance = levenshtein($nama, $namaKandidat);
 
                 if ($distance > self::FUZZY_MAX_DISTANCE) {
                     continue;
                 }
 
-                similar_text($nama, $candidateName, $percent);
+                similar_text($nama, $namaKandidat, $percent);
                 $percent = round($percent, 2);
 
                 if ($percent > $bestSimilarity) {
                     $bestSimilarity = $percent;
                     $bestDistance = $distance;
-                    $bestMatch = $candidate;
+                    $bestMatch = $kandidat;
                 }
             }
         }
@@ -361,7 +424,8 @@ class AuditService
     }
 
     /**
-     * Baris audit standar supaya bentuk datanya konsisten di semua cabang.
+     * Baris audit standar supaya bentuk datanya konsisten di semua
+     * jalur pencocokan.
      */
     private function barisAudit(
         int $dataMakamId,
