@@ -76,8 +76,36 @@ class AuditController extends Controller
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | TPU KANDIDAT "JALANKAN AUDIT PERTAMA"
+        |--------------------------------------------------------------------------
+        | Saat belum ada hasil audit tersimpan — audit pertama kali, atau
+        | habis di-reset oleh import baru — tombol Jalankan Audit tetap
+        | dihidupkan bila data lengkap sudah tersedia. TPU kandidatnya
+        | diambil dari TPU pengguna (kepala_tpu) atau dari data paling
+        | baru yang diimpor (admin), selaras dengan aturan generate().
+        */
+        $tpuAuditPertama = null;
+
+        if (!$latestResult && in_array($user->role, ['admin', 'kepala_tpu'])) {
+            $kandidatTpuId = $user->tpu_id
+                ?: DataMakam::query()->latest('id')->value('tpu_id');
+
+            if ($kandidatTpuId) {
+                $sumberTersedia = DataMakam::where('tpu_id', $kandidatTpuId)
+                    ->distinct()
+                    ->pluck('sumber');
+
+                if ($sumberTersedia->contains('pusat') && $sumberTersedia->contains('cabang')) {
+                    $tpuAuditPertama = (int) $kandidatTpuId;
+                }
+            }
+        }
+
         return view('audit.index', compact(
             'latestResult',
+            'tpuAuditPertama',
             'matchFull',
             'tahunBeda',
             'fuzzyMatch',
@@ -135,6 +163,11 @@ class AuditController extends Controller
                 . "php artisan siadit:generate-audit {$tpuId}"
             );
         }
+
+        // Mesin audit bisa memakan waktu belasan detik pada data ribuan
+        // baris; angkat batas eksekusi agar tidak tersandung
+        // max_execution_time di tengah proses.
+        set_time_limit(600);
 
         $result = $auditService->generate($tpuId);
 

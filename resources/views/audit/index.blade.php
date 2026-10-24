@@ -19,7 +19,7 @@
         <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div class="font-semibold text-slate-700 text-sm">
-                    Ringkasan Audit: TPU {{ $displayData->tpu->nama }}
+                    Ringkasan Audit: {{ $displayData->tpu->nama }}
                 </div>
                 <div class="text-xs text-slate-500 font-medium">
                     Terakhir diupdate: {{ date('d M Y, H:i', strtotime($displayData->updated_at)) }}

@@ -11,7 +11,7 @@
                 </svg>
             </div>
             <div class="font-semibold text-slate-800 text-[13px] uppercase tracking-wide">
-                Rincian Data Audit TPU {{ $displayData->tpu->nama }}
+                Rincian Data Audit {{ $displayData->tpu->nama }}
             </div>
         </div>
         <div class="text-[11px] text-slate-500">
