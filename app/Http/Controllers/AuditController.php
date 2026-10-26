@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AuditResultExport;
 use App\Models\Audit;
 use App\Models\AuditResult;
 use App\Models\DataMakam;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AuditController extends Controller
 {
@@ -18,16 +21,7 @@ class AuditController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role === 'kepala_tpu') {
-            $latestResult = AuditResult::with('tpu')
-                ->where('tpu_id', $user->tpu_id)
-                ->latest()
-                ->first();
-        } else {
-            $latestResult = AuditResult::with('tpu')
-                ->latest()
-                ->first();
-        }
+        $latestResult = $this->hasilTerbaru($user);
 
         $matchFull      = collect();
         $tahunBeda      = collect();
@@ -175,5 +169,48 @@ class AuditController extends Controller
             'success',
             'Sinkronisasi data makam Pusat dan TPU berhasil diselesaikan!'
         );
+    }
+
+    /**
+     * Unduh hasil audit terbaru sebagai berkas Excel multi-sheet:
+     * satu lembar ringkasan + lembar detail per kategori.
+     */
+    public function export()
+    {
+        $hasil = $this->hasilTerbaru(Auth::user());
+
+        if (!$hasil) {
+            return redirect('/audit')->with(
+                'error',
+                'Belum ada hasil audit untuk diekspor. Jalankan audit terlebih dahulu.'
+            );
+        }
+
+        // Ekspor menulis puluhan ribu baris ke Excel; angkat batas eksekusi
+        // agar tidak terhenti max_execution_time di tengah unduhan.
+        set_time_limit(300);
+
+        $namaFile = 'hasil-audit-' . Str::slug($hasil->tpu->nama, '-')
+            . '-' . $hasil->id . '.xlsx';
+
+        return Excel::download(new AuditResultExport($hasil), $namaFile);
+    }
+
+    /**
+     * Hasil audit terbaru yang berlaku bagi pengguna:
+     * kepala_tpu hanya pada TPU miliknya, selain itu yang terbaru.
+     */
+    private function hasilTerbaru($user): ?AuditResult
+    {
+        if ($user->role === 'kepala_tpu') {
+            return AuditResult::with('tpu')
+                ->where('tpu_id', $user->tpu_id)
+                ->latest()
+                ->first();
+        }
+
+        return AuditResult::with('tpu')
+            ->latest()
+            ->first();
     }
 }

@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::controller(AuditController::class)->group(function () {
         Route::get('/audit', 'index');
+        Route::get('/audit/export', 'export');
         Route::post('/audit/generate', 'generate');
     });
 
