@@ -23,17 +23,23 @@ class ImportMakamService
      * Hapus seluruh data lama untuk (tpu, sumber) lalu import file baru.
      *
      * @param  mixed  $file  UploadedFile atau path file Excel
+     * @param  ?string  $namaTersimpan  nama berkas yang dicatat ke riwayat (bila memakai path)
      * @return int  jumlah baris yang berhasil diimport
      */
-    public function gantiDataDanImport(int $tpuId, string $sumber, mixed $file, bool $useTransaction = true): int
-    {
-        $proses = function () use ($tpuId, $sumber, $file) {
+    public function gantiDataDanImport(
+        int $tpuId,
+        string $sumber,
+        mixed $file,
+        bool $useTransaction = true,
+        ?string $namaTersimpan = null
+    ): int {
+        $proses = function () use ($tpuId, $sumber, $file, $namaTersimpan) {
             $this->purgeDataLama($tpuId, $sumber);
 
             $import = Import::create([
                 'tpu_id'   => $tpuId,
                 'sumber'   => $sumber,
-                'filename' => $this->namaFile($file),
+                'filename' => $namaTersimpan ?? $this->namaFile($file),
             ]);
 
             Excel::import(

@@ -80,6 +80,55 @@
                 </div>
             @endif
 
+            {{-- Status pemrosesan antrean --}}
+            @foreach ($prosesImport as $proses)
+                <div data-muat-ulang-otomatis
+                    class="mx-8 mt-6 mb-2 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
+                    <svg class="shrink-0 mt-1 animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    <div class="text-sm leading-relaxed">
+                        <span class="font-semibold">Impor {{ $proses['tpu'] }} sedang diproses di antrean latar belakang.</span>
+                        Dimulai {{ date('H:i', $proses['sejak']) }}; halaman memperbarui otomatis tiap 5 detik.
+                        @if (time() - $proses['sejak'] > 300)
+                            <span class="block text-xs mt-1 opacity-80">
+                                Sudah lama tidak berubah? Pastikan pemroses antrean (queue worker) masih berjalan di server.
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+
+            @if ($pesanGagalImport)
+                <div class="mx-8 mt-6 mb-2 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                    <svg class="shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div class="text-sm font-medium leading-relaxed">
+                        <span class="font-semibold">Impor terakhir gagal dijalankan.</span>
+                        <span class="block text-xs mt-1">{{ $pesanGagalImport }}</span>
+                        <span class="block text-xs mt-1">Coba unggah ulang dua berkas; bila berulang, minta Admin menjalankan impor lewat perintah <code>siadit:import-excel</code>.</span>
+                    </div>
+                </div>
+            @endif
+
+            @if ($pesanHasilImport)
+                <div class="mx-8 mt-6 mb-2 flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700">
+                    <svg class="shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+                    <div class="text-sm leading-relaxed">
+                        <span class="font-semibold">{{ $pesanHasilImport }}</span>
+                        <span class="block text-xs mt-1">Lanjut ke menu Hasil Audit lalu klik Jalankan Audit — prosesnya juga berjalan di antrean latar belakang.</span>
+                    </div>
+                </div>
+            @endif
+
             {{-- Form Body --}}
             <form action="/upload" method="POST" enctype="multipart/form-data" class="px-8 py-7 flex flex-col gap-5">
                 @csrf
@@ -284,4 +333,12 @@
             loadingIcon.classList.remove('hidden');
         });
     </script>
+
+    @if (count($prosesImport) > 0)
+        <script>
+            // Impor diproses worker di latar belakang: muat ulang halaman
+            // periodik sampai proses selesai.
+            setTimeout(() => location.reload(), 5000);
+        </script>
+    @endif
 @endpush

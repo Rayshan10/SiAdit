@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Exports\AuditResultExport;
+use App\Jobs\ProcessAudit;
 use App\Models\Audit;
 use App\Models\AuditResult;
 use App\Models\DataMakam;
-use App\Services\AuditService;
+use App\Support\ProgresProses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -97,6 +98,24 @@ class AuditController extends Controller
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS ANTREAN AUDIT
+        |--------------------------------------------------------------------------
+        | Saat audit dijalankan via web, worker memprosesnya di latar belakang.
+        | Status disimpan sebagai penanda cache berdurasi dan dibaca dari TPU
+        | yang tepat: hasil terbaru bila ada, kalau kosong TPU kandidat audit.
+        */
+        $tpuAktif = $latestResult?->tpu_id ?: $tpuAuditPertama;
+
+        $auditBerjalanSejak = $tpuAktif
+            ? ProgresProses::berjalanSejak('audit', $tpuAktif)
+            : null;
+
+        $auditPesanGagal = $tpuAktif
+            ? ProgresProses::ambilPesanGagal('audit', $tpuAktif)
+            : null;
+
         return view('audit.index', compact(
             'latestResult',
             'tpuAuditPertama',
@@ -109,11 +128,14 @@ class AuditController extends Controller
 
             'totalPusat',
             'totalCabang',
-            'persentaseSinkronisasi'
+            'persentaseSinkronisasi',
+
+            'auditBerjalanSejak',
+            'auditPesanGagal'
         ));
     }
 
-    public function generate(Request $request, AuditService $auditService)
+    public function generate(Request $request)
     {
         $user = Auth::user();
 
@@ -146,28 +168,21 @@ class AuditController extends Controller
             );
         }
 
-        // Dataset besar: jalankan lewat CLI agar tidak kena timeout browser.
-        $jumlahData = DataMakam::where('tpu_id', $tpuId)->count();
-
-        if ($jumlahData > 50_000) {
-            return back()->with(
+        // Satu audit per TPU dalam satu waktu: jangan dua kali masuk antrean.
+        if (ProgresProses::berjalan('audit', $tpuId)) {
+            return redirect('/audit')->with(
                 'error',
-                "Data di TPU ini besar (" . number_format($jumlahData) . ' baris). '
-                . "Jalankan audit lewat terminal agar aman dari timeout: "
-                . "php artisan siadit:generate-audit {$tpuId}"
+                'Audit untuk TPU ini masih berjalan di antrean. Halaman Hasil Audit memperbarui otomatis sampai proses selesai.'
             );
         }
 
-        // Mesin audit bisa memakan waktu belasan detik pada data ribuan
-        // baris; angkat batas eksekusi agar tidak tersandung
-        // max_execution_time di tengah proses.
-        set_time_limit(600);
+        ProgresProses::mulai('audit', $tpuId);
 
-        $result = $auditService->generate($tpuId);
+        ProcessAudit::dispatch($tpuId);
 
         return redirect('/audit')->with(
             'success',
-            'Sinkronisasi data makam Pusat dan TPU berhasil diselesaikan!'
+            'Audit masuk antrean dan dijalankan di latar belakang. Halaman Hasil Audit akan memperbarui otomatis sampai proses selesai.'
         );
     }
 
@@ -183,6 +198,13 @@ class AuditController extends Controller
             return redirect('/audit')->with(
                 'error',
                 'Belum ada hasil audit untuk diekspor. Jalankan audit terlebih dahulu.'
+            );
+        }
+
+        if (ProgresProses::berjalan('audit', $hasil->tpu_id)) {
+            return redirect('/audit')->with(
+                'error',
+                'Audit sedang berjalan di antrean; unduh Excel setelah proses audit selesai.'
             );
         }
 

@@ -7,6 +7,49 @@
     {{-- Alert Sukses --}}
     @include('components.audit.partials.alert')
 
+    {{-- Status antrean: audit berjalan / gagal di worker --}}
+    @if ($auditBerjalanSejak)
+        <div data-muat-ulang-otomatis
+            class="mb-5 flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
+            <svg class="shrink-0 mt-1 animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <div class="text-sm leading-relaxed">
+                <span class="font-semibold">Audit sedang berjalan di antrean latar belakang</span>
+                — dimulai {{ date('H:i', $auditBerjalanSejak) }} dan halaman ini memperbarui otomatis tiap 5 detik.
+                @if (time() - $auditBerjalanSejak > 300)
+                    <span class="block text-xs mt-1 opacity-80">
+                        Sudah lama tidak berubah? Pastikan pemroses antrean (queue worker) masih berjalan di server.
+                    </span>
+                @endif
+            </div>
+        </div>
+    @endif
+
+    @if ($auditPesanGagal)
+        <div class="mb-5 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+            <svg class="shrink-0 mt-0.5" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div class="text-sm leading-relaxed">
+                <span class="font-semibold">Proses audit terakhir gagal.</span>
+                <span class="block mt-1 text-xs">{{ $auditPesanGagal }}</span>
+                <form action="{{ url('/audit/generate') }}" method="POST" class="mt-2">
+                    @csrf
+                    <input type="hidden" name="tpu_id" value="{{ $latestResult?->tpu_id ?? $tpuAuditPertama }}">
+                    <button type="submit"
+                        class="h-8 px-3 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition">
+                        Coba Jalankan Audit Lagi
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
+
     {{-- Header Section --}}
     @include('components.audit.header')
 
@@ -45,7 +88,7 @@
         {{-- Container Rincian Tabel --}}
         @include('components.audit.details-grid')
 
-    @else
+    @elseif (empty($auditBerjalanSejak) && empty($auditPesanGagal))
         {{-- State jika belum ada data --}}
         @include('components.audit.empty-state')
     @endif
@@ -54,4 +97,12 @@
 
 @push('scripts')
     @include('components.audit.scripts')
+
+    @if ($auditBerjalanSejak)
+        <script>
+            // Audit diproses worker di latar belakang: muat ulang halaman
+            // periodik sampai hasil audit baru tersaji.
+            setTimeout(() => location.reload(), 5000);
+        </script>
+    @endif
 @endpush
