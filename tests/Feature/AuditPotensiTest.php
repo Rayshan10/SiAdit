@@ -9,6 +9,11 @@ use App\Services\AuditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Penjaga tampilan: kartu "Estimasi Potensi Selisih" (Rupiah) sengaja
+ * tidak dirender karena nilai pengalinya tidak memiliki dasar angka
+ * resmi — kartu jumlah baris di ringkasan sudah cukup.
+ */
 class AuditPotensiTest extends TestCase
 {
     use RefreshDatabase;
@@ -52,22 +57,18 @@ class AuditPotensiTest extends TestCase
         app(AuditService::class)->generate($tpu->id);
     }
 
-    public function test_halaman_audit_menampilkan_estimasi_potensi_selisih(): void
+    public function test_halaman_audit_dengan_hasil_tidak_menampilkan_estimasi_rupiah(): void
     {
         $this->siapkanDataAudit();
 
         $respons = $this->actingAs($this->admin())->get('/audit');
 
         $respons->assertOk();
-        $respons->assertSee('Estimasi Potensi Selisih');
-
-        // Satu baris tidak berpasangan di kedua sumber × Rp 475.000.
-        $respons->assertSee('Rp 475.000');
-        $respons->assertSee('1 baris data pusat');
-        $respons->assertSee('1 baris data cabang');
+        $respons->assertDontSee('Estimasi Potensi Selisih');
+        $respons->assertDontSee('Rp 475.000');
     }
 
-    public function test_halaman_audit_tanpa_hasil_tidak_menampilkan_estimasi(): void
+    public function test_halaman_audit_tanpa_hasil_tidak_menampilkan_estimasi_rupiah(): void
     {
         $respons = $this->actingAs($this->admin())->get('/audit');
 
