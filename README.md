@@ -144,7 +144,7 @@ Data yang diaudit: **23.662 baris pusat** (rentang 1900–2026) dan
 | [MySQL 8](https://www.mysql.com) | Penyimpanan data, transaksi ketat, indeks |
 | [maatwebsite/excel](https://laravel-excel.com) (PhpSpreadsheet) | Pembaca Excel multi-format |
 | [Tailwind CSS](https://tailwindcss.com) + [Vite](https://vitejs.dev) | Antarmuka & build aset |
-| [Chart.js](https://www.chartjs.org) | Grafik proporsi hasil audit |
+| [Chart.js](https://www.chartjs.org) — bundel npm/Vite | Grafik proporsi hasil audit, tanpa CDN |
 | [Laravel Breeze](https://laravel.com/docs/starter-kits) | Otentikasi & profil pengguna |
 | Laravel Queue (driver database) | Antrean, worker latar belakang, papan kegagalan |
 | [PHPUnit](https://phpunit.de) | 56 test otomatis (unit + fitur) |
