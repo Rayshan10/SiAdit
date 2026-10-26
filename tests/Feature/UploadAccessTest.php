@@ -11,8 +11,7 @@ class UploadAccessTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function kepala_uptd_dilarang_membuka_halaman_upload(): void
+    public function test_kepala_uptd_dilarang_membuka_halaman_upload(): void
     {
         $uptd = User::create([
             'name' => 'Kepala UPTD',
@@ -26,8 +25,7 @@ class UploadAccessTest extends TestCase
             ->assertForbidden();
     }
 
-    /** @test */
-    public function admin_dapat_membuka_halaman_upload(): void
+    public function test_admin_dapat_membuka_halaman_upload(): void
     {
         $admin = User::create([
             'name' => 'Admin',
@@ -41,8 +39,7 @@ class UploadAccessTest extends TestCase
             ->assertOk();
     }
 
-    /** @test */
-    public function upload_tanpa_file_ditolak_validasi_bukan_error_500(): void
+    public function test_upload_tanpa_file_ditolak_validasi_bukan_error_500(): void
     {
         $tpu = Tpu::create(['nama' => 'TPU Pandu', 'kode' => 'TPU-PANDU']);
 
@@ -60,8 +57,7 @@ class UploadAccessTest extends TestCase
         $respons->assertSessionHasErrors(['file_pusat', 'file_cabang']);
     }
 
-    /** @test */
-    public function halaman_register_sudah_dinonaktifkan(): void
+    public function test_halaman_register_sudah_dinonaktifkan(): void
     {
         $this->get('/register')->assertNotFound();
     }

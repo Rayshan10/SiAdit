@@ -84,8 +84,7 @@ class AuditServiceTest extends TestCase
         $this->hasil = app(AuditService::class)->generate($this->tpu->id);
     }
 
-    /** @test */
-    public function hasil_ringkasan_sesuai_skenario(): void
+    public function test_hasil_ringkasan_sesuai_skenario(): void
     {
         $this->assertSame(1, $this->hasil->total_match);
         $this->assertSame(2, $this->hasil->total_tahun_beda);
@@ -96,8 +95,7 @@ class AuditServiceTest extends TestCase
         $this->assertSame(0, $this->hasil->total_duplikat_cabang);
     }
 
-    /** @test */
-    public function jumlah_baris_per_status_cocok_dengan_ringkasan(): void
+    public function test_jumlah_baris_per_status_cocok_dengan_ringkasan(): void
     {
         foreach (
             [
@@ -118,8 +116,7 @@ class AuditServiceTest extends TestCase
         }
     }
 
-    /** @test */
-    public function baris_fuzzy_menyimpan_skor_kemiripan_dan_jarak(): void
+    public function test_baris_fuzzy_menyimpan_skor_kemiripan_dan_jarak(): void
     {
         $fuzzy = Audit::where('audit_result_id', $this->hasil->id)
             ->where('status', 'fuzzy_match')
@@ -138,8 +135,7 @@ class AuditServiceTest extends TestCase
         $this->assertSame('AHMAD SAA', $fuzzy->matchedData->nama_clean);
     }
 
-    /** @test */
-    public function menjalankan_ulang_audit_mereset_hasil_lama(): void
+    public function test_menjalankan_ulang_audit_mereset_hasil_lama(): void
     {
         $idLama = $this->hasil->id;
 
