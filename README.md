@@ -74,9 +74,6 @@ sehingga tidak pernah memproduksi tahun absurd seperti kasus di atas.
 - **Ekspor hasil audit ke Excel**: satu tombol mengunduh satu berkas `.xlsx` — lembar
   Ringkasan ditambah enam lembar detail yang memuat seluruh baris tiap kategori (bukan
   hanya 100 baris seperti tampilan layar), siap dilampirkan ke laporan.
-- **Estimasi potensi selisih nilai**: di halaman audit, baris yang tidak
-  berpasangan tiap sumber dikalikan estimasi nilai per makam (Rp 475.000) —
-  memberi gambaran dampak selisih data dalam Rupiah.
 - **Multi-role**: `admin` (kelola user & master TPU), `kepala_tpu` (unggah file),
   `kepala_uptd` (monitor hasil) — menu dan halaman disesuaikan per role.
 - **Impor & audit berjalan di antrean**: kedua proses dieksekusi oleh worker latar
