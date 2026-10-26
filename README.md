@@ -5,7 +5,7 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?logo=chartdotjs&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-40%20passed-16A34A)
+![Tests](https://img.shields.io/badge/Tests-50%20passed-16A34A)
 
 <p align="center">
   <img src="docs/hasil-audit1.png" alt="Halaman Hasil Audit SiAdit" width="1000">
@@ -68,13 +68,16 @@ sehingga tidak pernah memproduksi tahun absurd seperti kasus di atas.
   lama ikut di-reset bersih — tidak ada kemungkinan data setengah jadi.
 - **Hasil audit interaktif**: pencarian instan per kategori tanpa reload, chart donut
   proporsi kategori, serta skor kemiripan dan jarak Levenshtein pada tiap pasangan Fuzzy Match.
+- **Ekspor hasil audit ke Excel**: satu tombol mengunduh satu berkas `.xlsx` — lembar
+  Ringkasan ditambah enam lembar detail yang memuat seluruh baris tiap kategori (bukan
+  hanya 100 baris seperti tampilan layar), siap dilampirkan ke laporan.
 - **Multi-role**: `admin` (kelola user & master TPU), `kepala_tpu` (unggah file),
   `kepala_uptd` (monitor hasil) — menu dan halaman disesuaikan per role.
 - **Pekerjaan berat ditaruh di CLI**: data lebih dari ±50 ribu baris diblok dari web dan
   dialihkan ke perintah `siadit:import-excel` / `siadit:generate-audit` agar aman dari timeout.
 - **Kinerja dataset besar**: bulk insert 1.000 baris per batch, indeks database, dan hanya
   kolom yang benar-benar dipakai yang dimuat — audit 47 ribu baris selesai ±20 detik.
-- **40 test otomatis** (unit + fitur), termasuk regresi untuk kasus nyata:
+- **50 test otomatis** (unit + fitur), termasuk regresi untuk kasus nyata:
   tanggal nol, data duplikat, dan pencocokan ganda.
 
 ## 📊 Hasil pada Data Nyata (TPU Pandu)
@@ -141,7 +144,7 @@ Data yang diaudit: **23.662 baris pusat** (rentang 1900–2026) dan
 | [Tailwind CSS](https://tailwindcss.com) + [Vite](https://vitejs.dev) | Antarmuka & build aset |
 | [Chart.js](https://www.chartjs.org) | Grafik proporsi hasil audit |
 | [Laravel Breeze](https://laravel.com/docs/starter-kits) | Otentikasi & profil pengguna |
-| [PHPUnit](https://phpunit.de) | 40 test otomatis (unit + fitur) |
+| [PHPUnit](https://phpunit.de) | 50 test otomatis (unit + fitur) |
 
 ## 🚀 Cara Menjalankan
 
@@ -190,7 +193,8 @@ php artisan tinker
 1. Menu **Upload File**: pilih TPU, unggah **File Pusat** (Dinas) dan **File Cabang** (TPU).
    Impor berjalan dalam satu transaksi dan otomatis menggantikan data lama per sumber.
 2. Menu **Hasil Audit**: klik **Jalankan Audit** — setelah ±20 detik, ringkasan, chart, dan
-   tabel rincian audit tampil lengkap, lengkap dengan pencarian nama per kategori.
+   tabel rincian audit tampil lengkap dengan pencarian nama per kategori. Tombol
+   **Unduh Excel** di panel ringkasan mengunduh seluruh hasil audit sebagai berkas Excel.
 3. Untuk data di atas ±50 ribu baris, gunakan CLI:
 
 ```bash
