@@ -5,7 +5,7 @@
 ![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?logo=chartdotjs&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-56%20passed-16A34A)
+![Tests](https://img.shields.io/badge/Tests-57%20passed-16A34A)
 
 <p align="center">
   <img src="docs/hasil-audit1.png" alt="Halaman Hasil Audit SiAdit" width="1000">
@@ -79,7 +79,7 @@ sehingga tidak pernah memproduksi tahun absurd seperti kasus di atas.
   `siadit:import-excel` / `siadit:generate-audit` tetap tersedia untuk operasi manual.
 - **Kinerja dataset besar**: bulk insert 1.000 baris per batch, indeks database, dan hanya
   kolom yang benar-benar dipakai yang dimuat — audit 47 ribu baris selesai ±20 detik.
-- **56 test otomatis** (unit + fitur), termasuk regresi untuk kasus nyata:
+- **57 test otomatis** (unit + fitur), termasuk regresi untuk kasus nyata:
   tanggal nol, data duplikat, pencocokan ganda, dan kegagalan job antrean.
 
 ## 📊 Hasil pada Data Nyata (TPU Pandu)
@@ -147,7 +147,7 @@ Data yang diaudit: **23.662 baris pusat** (rentang 1900–2026) dan
 | [Chart.js](https://www.chartjs.org) — bundel npm/Vite | Grafik proporsi hasil audit, tanpa CDN |
 | [Laravel Breeze](https://laravel.com/docs/starter-kits) | Otentikasi & profil pengguna |
 | Laravel Queue (driver database) | Antrean, worker latar belakang, papan kegagalan |
-| [PHPUnit](https://phpunit.de) | 56 test otomatis (unit + fitur) |
+| [PHPUnit](https://phpunit.de) | 57 test otomatis (unit + fitur) |
 
 ## 🚀 Cara Menjalankan
 
