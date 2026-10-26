@@ -7,10 +7,9 @@ use App\Http\Controllers\UploadController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TpuController;
+use App\Http\Controllers\WelcomeController;
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+Route::get('/', WelcomeController::class);
 
 /*
 |--------------------------------------------------------------------------

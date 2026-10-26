@@ -7,16 +7,6 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * Halaman awal mengarahkan pengguna ke halaman login.
-     */
-    public function test_halaman_awal_mengarah_ke_login(): void
-    {
-        $response = $this->get('/');
-
-        $response->assertRedirect(route('login'));
-    }
-
-    /**
      * Registri publik dinonaktifkan (akun dibuat oleh Admin).
      */
     public function test_registrasi_tidak_tersedia(): void
