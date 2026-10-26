@@ -63,6 +63,9 @@ sehingga tidak pernah memproduksi tahun absurd seperti kasus di atas.
 
 ## ✨ Fitur Utama
 
+- **Halaman sambutan publik**: `/` tidak lagi melompat ke halaman login — tamu melihat
+  ringkasan nilai, statistik data nyata, dan screenshot hasil audit sebelum masuk;
+  pengguna yang sudah masuk langsung dibawa ke Dashboard.
 - **Impor dua file sekali jalan** dengan semantik *replace* per sumber: data lama dihapus
   lalu diimpor ulang **dalam satu transaksi** (semua-atau-tidak-sama-sekali), dan hasil audit
   lama ikut di-reset bersih — tidak ada kemungkinan data setengah jadi.
@@ -200,14 +203,16 @@ php artisan tinker
 
 ### Alur pemakaian
 
-1. Menu **Upload File**: pilih TPU, unggah **File Pusat** (Dinas) dan **File Cabang** (TPU).
+1. Buka `/`: tamu melihat **halaman sambutan publik**, lalu masuk lewat tombol **Masuk**;
+   pengguna yang sudah masuk otomatis dibawa ke Dashboard.
+2. Menu **Upload File**: pilih TPU, unggah **File Pusat** (Dinas) dan **File Cabang** (TPU).
    Impor dieksekusi antrean di latar belakang — kedua berkas ditangani dalam satu
    transaksi dan menggantikan data lama per sumber; halaman memantau status otomatis.
-2. Menu **Hasil Audit**: klik **Jalankan Audit** — audit juga diproses di antrean; saat
+3. Menu **Hasil Audit**: klik **Jalankan Audit** — audit juga diproses di antrean; saat
    tamat, ringkasan, chart, dan tabel rincian tampil lengkap dengan pencarian nama per
    kategori. Tombol **Unduh Excel** di panel ringkasan mengunduh seluruh hasil audit
    sebagai berkas Excel.
-3. Untuk operasi manual (atau lingkungan tanpa worker yang terus menyala), gunakan CLI:
+4. Untuk operasi manual (atau lingkungan tanpa worker yang terus menyala), gunakan CLI:
 
 ```bash
 # Impor dua file Excel (menggantikan data lama TPU yang dimaksud)
@@ -231,7 +236,8 @@ app/
 │   ├── UploadController.php        # unggah dua file Excel via web → antrean impor
 │   ├── AuditController.php         # halaman hasil audit + unduh Excel
 │   ├── UserController.php          # kelola user (admin)
-│   └── TpuController.php           # kelola TPU (admin)
+│   ├── TpuController.php           # kelola TPU (admin)
+│   └── WelcomeController.php       # halaman sambutan publik + pengalihan ke dashboard
 ├── Imports/DataMakamImport.php     # pembaca baris Excel + rantai fallback tanggal
 ├── Jobs/
 │   ├── ProcessImportMakam.php      # job antrean: impor dua berkas (ganti-data 1 transaksi)
