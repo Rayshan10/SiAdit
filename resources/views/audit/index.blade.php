@@ -85,6 +85,9 @@
             @include('components.audit.chart')
         </div>
 
+        {{-- Estimasi potensi selisih nilai (Rupiah) --}}
+        @include('components.audit.audit-info', ['audit' => $displayData])
+
         {{-- Container Rincian Tabel --}}
         @include('components.audit.details-grid')
 
